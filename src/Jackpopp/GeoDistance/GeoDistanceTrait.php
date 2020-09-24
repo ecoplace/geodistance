@@ -5,9 +5,9 @@ use Jackpopp\GeoDistance\InvalidMeasurementException;
 
 trait GeoDistanceTrait {
 
-    protected $latColumn = 'lat';
+    protected $latColumn = 'latitude';
 
-    protected $lngColumn = 'lng';
+    protected $lngColumn = 'longitude';
 
     protected $distance = 10;
 
@@ -20,6 +20,10 @@ trait GeoDistanceTrait {
         'feet' => 20902231,
         'nautical_miles' => 3440.06479
     ];
+
+    private static $ADAPTER_CLASS = 'QueryAdapter';
+
+    private static $ADAPTER_NAMESPACE = 'QueryAdapters';
 
     public function getLatColumn()
     {
@@ -58,7 +62,7 @@ trait GeoDistanceTrait {
     *
     * Grabs the earths mean radius in a specific measurment based on the key provided, throws an exception
     * if no mean readius measurement is found
-    * 
+    *
     * @throws InvalidMeasurementException
     * @return float
     **/
@@ -89,6 +93,7 @@ trait GeoDistanceTrait {
 
     public function scopeWithin($q, $distance, $measurement = null, $lat = null, $lng = null)
     {
+        $this->distance = $distance;
         $pdo = DB::connection()->getPdo();
 
         $latColumn = $this->getLatColumn();
@@ -98,14 +103,13 @@ trait GeoDistanceTrait {
         $lng = ($lng === null) ? $this->lng() : $lng;
 
         $meanRadius = $this->resolveEarthMeanRadius($measurement);
-        $distance = floatval($distance);
 
         // first-cut bounding box (in degrees)
-        $maxLat = floatval($lat) + rad2deg($distance/$meanRadius);
-        $minLat = floatval($lat) - rad2deg($distance/$meanRadius);
+        $maxLat = floatval($lat) + rad2deg($this->distance/$meanRadius);
+        $minLat = floatval($lat) - rad2deg($this->distance/$meanRadius);
         // compensate for degrees longitude getting smaller with increasing latitude
-        $maxLng = floatval($lng) + rad2deg($distance/$meanRadius/cos(deg2rad(floatval($lat))));
-        $minLng = floatval($lng) - rad2deg($distance/$meanRadius/cos(deg2rad(floatval($lat))));
+        $maxLng = floatval($lng) + rad2deg($this->distance/$meanRadius/cos(deg2rad(floatval($lat))));
+        $minLng = floatval($lng) - rad2deg($this->distance/$meanRadius/cos(deg2rad(floatval($lat))));
 
         $lat = $pdo->quote(floatval($lat));
         $lng = $pdo->quote(floatval($lng));
@@ -113,8 +117,10 @@ trait GeoDistanceTrait {
 
         // Paramater bindings havent been used as it would need to be within a DB::select which would run straight away and return its result, which we dont want as it will break the query builder.
         // This method should work okay as our values have been cooerced into correct types and quoted with pdo.
+        $adapter = $this->resolveQueryAdapter(DB::connection()->getDriverName());
+        return $adapter->within($q, $meanRadius, $lat, $lng, $minLat, $minLng, $maxLat, $maxLng);
 
-        return $q->select(DB::raw("*, ( $meanRadius * acos( cos( radians($lat) ) * cos( radians( $latColumn ) ) * cos( radians( $lngColumn ) - radians($lng) ) + sin( radians($lat) ) * sin( radians( $latColumn ) ) ) ) AS distance"))
+        /*return $q->select(DB::raw("*, ( $meanRadius * acos( cos( radians($lat) ) * cos( radians( $latColumn ) ) * cos( radians( $lngColumn ) - radians($lng) ) + sin( radians($lat) ) * sin( radians( $latColumn ) ) ) ) AS distance"))
             ->from(DB::raw(
                 "(
                     Select *
@@ -123,12 +129,13 @@ trait GeoDistanceTrait {
                     And $lngColumn Between $minLng And $maxLng
                 ) As {$this->getTable()}"
             ))
-            ->having('distance', '<=', $distance)
-            ->orderby('distance', 'ASC');
+            ->having('distance', '<=', $this->distance)
+            ->orderby('distance', 'ASC');*/
     }
 
     public function scopeOutside($q, $distance, $measurement = null, $lat = null, $lng = null)
     {
+        $this->distance = $distance;
         $pdo = DB::connection()->getPdo();
 
         $latColumn = $this->getLatColumn();
@@ -144,9 +151,25 @@ trait GeoDistanceTrait {
         $lng = $pdo->quote(floatval($lng));
         $meanRadius = $pdo->quote(floatval($meanRadius));
 
-        return $q->select(DB::raw("*, ( $meanRadius * acos( cos( radians($lat) ) * cos( radians( $latColumn ) ) * cos( radians( $lngColumn ) - radians($lng) ) + sin( radians($lat) ) * sin( radians( $latColumn ) ) ) ) AS distance"))
-        ->having('distance', '>=', $distance)
-        ->orderby('distance', 'ASC');
+        $adapter = $this->resolveQueryAdapter(DB::connection()->getDriverName());
+        return $adapter->outside($q, $meanRadius, $lat, $lng);
+    }
+
+    public function resolveQueryAdapter($connectionType)
+    {
+        $class = $this->buildFullyQualifiedClassString($connectionType);
+
+        if ( ! class_exists($class))
+        {
+            $class =  $this->buildFullyQualifiedClassString();
+        }
+
+        return new $class($this, $this->getTable(), $this->getLatColumn(), $this->getLngColumn(), $this->distance);
+    }
+
+    private function buildFullyQualifiedClassString($connectionType = '')
+    {
+        return __NAMESPACE__.'\\'.self::$ADAPTER_NAMESPACE."\\{$connectionType}".self::$ADAPTER_CLASS;
     }
 
 }
