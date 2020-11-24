@@ -3,6 +3,9 @@
   <component name="ChangeListManager">
     <list default="true" id="9fc424e5-97ac-48bd-ac37-aadc1fe53e59" name="Default Changelist" comment="">
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/Jackpopp/GeoDistance/queryAdapters/AbstractQueryAdapter.php" beforeDir="false" afterPath="$PROJECT_DIR$/src/Jackpopp/GeoDistance/QueryAdapters/AbstractQueryAdapter.php" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/Jackpopp/GeoDistance/queryAdapters/QueryAdapter.php" beforeDir="false" afterPath="$PROJECT_DIR$/src/Jackpopp/GeoDistance/QueryAdapters/QueryAdapter.php" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/Jackpopp/GeoDistance/queryAdapters/pgsqlQueryAdapter.php" beforeDir="false" afterPath="$PROJECT_DIR$/src/Jackpopp/GeoDistance/QueryAdapters/pgsqlQueryAdapter.php" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -32,6 +35,7 @@
     <property name="node.js.selected.package.tslint" value="(autodetect)" />
     <property name="nodejs_interpreter_path.stuck_in_default_project" value="undefined stuck path" />
     <property name="nodejs_npm_path_reset_for_default_project" value="true" />
+    <property name="nodejs_package_manager_path" value="npm" />
     <property name="settings.editor.selected.configurable" value="configurable.group.appearance" />
     <property name="vue.rearranger.settings.migration" value="true" />
   </component>
@@ -45,10 +49,22 @@
       <updated>1600990741892</updated>
       <workItem from="1600990742957" duration="599000" />
       <workItem from="1606217033187" duration="747000" />
+      <workItem from="1606218518284" duration="823000" />
     </task>
     <servers />
   </component>
   <component name="TypeScriptGeneratedFilesManager">
     <option name="version" value="3" />
+  </component>
+  <component name="Vcs.Log.Tabs.Properties">
+    <option name="TAB_STATES">
+      <map>
+        <entry key="MAIN">
+          <value>
+            <State />
+          </value>
+        </entry>
+      </map>
+    </option>
   </component>
 </project>
